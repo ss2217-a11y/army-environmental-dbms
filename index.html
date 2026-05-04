@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AEI-DBMS | Army Environmental Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#040d0a;--panel:#0b1f1a;--border:#1a4a3a;--accent:#00ff88;--accent2:#00c8ff;--warn:#ff9900;--danger:#ff3344;--text:#c8ffe8;--muted:#4a7a68;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;}
+header{background:#071410;border-bottom:2px solid var(--accent);padding:12px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 0 30px rgba(0,255,136,.1);}
+.logo h1{font-family:'Orbitron',monospace;font-size:14px;color:var(--accent);letter-spacing:3px;}
+.logo p{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;}
+.conn{font-family:'Share Tech Mono',monospace;font-size:11px;padding:4px 12px;border-radius:2px;border:1px solid var(--accent);color:var(--accent);}
+.layout{display:flex;min-height:calc(100vh - 60px);}
+nav{width:210px;background:#071410;border-right:1px solid var(--border);padding:16px 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
+.nav-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:3px;padding:12px 18px 4px;}
+.nav-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 18px;background:none;border:none;border-left:3px solid transparent;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;text-align:left;}
+.nav-btn:hover,.nav-btn.active{background:rgba(0,255,136,.08);color:var(--accent);border-left-color:var(--accent);}
+main{flex:1;padding:24px;overflow-y:auto;}
+.page-header{margin-bottom:20px;}
+.page-header h2{font-family:'Orbitron',monospace;font-size:14px;color:var(--accent);letter-spacing:2px;}
+.page-header p{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;}
+.section{display:none;}.section.active{display:block;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:18px;margin-bottom:18px;}
+.panel-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:14px;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:14px;text-align:center;}
+.stat-num{font-family:'Orbitron',monospace;font-size:26px;color:var(--accent);}
+.stat-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:rgba(0,255,136,.06);border-bottom:1px solid var(--accent);}
+th{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:2px;padding:9px 10px;text-align:left;}
+td{padding:8px 10px;border-bottom:1px solid rgba(26,74,58,.4);color:var(--text);}
+tr:hover td{background:rgba(0,255,136,.03);}
+.tbl-wrap{overflow-x:auto;}
+.badge{display:inline-block;padding:2px 7px;border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:10px;}
+.b-active{background:rgba(0,255,136,.12);color:var(--accent);border:1px solid var(--accent);}
+.b-completed{background:rgba(0,200,255,.1);color:var(--accent2);border:1px solid var(--accent2);}
+.b-planned{background:rgba(255,153,0,.1);color:var(--warn);border:1px solid var(--warn);}
+.b-resolved{background:rgba(74,122,104,.2);color:var(--muted);border:1px solid var(--muted);}
+.b-critical{background:rgba(255,51,68,.12);color:var(--danger);border:1px solid var(--danger);}
+.b-high{background:rgba(255,153,0,.12);color:var(--warn);border:1px solid var(--warn);}
+.b-medium{background:rgba(0,200,255,.1);color:var(--accent2);border:1px solid var(--accent2);}
+.b-low{background:rgba(0,255,136,.1);color:var(--accent);border:1px solid var(--accent);}
+.b-safe{background:rgba(0,255,136,.1);color:var(--accent);border:1px solid var(--accent);}
+.b-contaminated{background:rgba(255,51,68,.12);color:var(--danger);border:1px solid var(--danger);}
+.b-questionable{background:rgba(255,153,0,.1);color:var(--warn);border:1px solid var(--warn);}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:14px;}
+.form-group label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px;}
+.form-group input,.form-group select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:7px 9px;outline:none;transition:.2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+.form-group select option{background:var(--bg);}
+.btn{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;padding:7px 16px;border-radius:3px;border:1px solid;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:rgba(0,255,136,.08);border-color:var(--accent);color:var(--accent);}
+.btn-primary:hover{background:rgba(0,255,136,.2);}
+.btn-info{background:rgba(0,200,255,.08);border-color:var(--accent2);color:var(--accent2);}
+.btn-info:hover{background:rgba(0,200,255,.18);}
+.btn-danger{background:rgba(255,51,68,.08);border-color:var(--danger);color:var(--danger);}
+.btn-danger:hover{background:rgba(255,51,68,.2);}
+.btn-warn{background:rgba(255,153,0,.08);border-color:var(--warn);color:var(--warn);}
+.btn-warn:hover{background:rgba(255,153,0,.18);}
+.btn-sm{padding:3px 10px;font-size:10px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.alert{padding:10px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:11px;margin:10px 0;border-left:3px solid;}
+.alert-success{background:rgba(0,255,136,.05);border-color:var(--accent);color:var(--accent);}
+.alert-error{background:rgba(255,51,68,.05);border-color:var(--danger);color:var(--danger);}
+.alert-info{background:rgba(0,200,255,.05);border-color:var(--accent2);color:var(--accent2);}
+.loading{text-align:center;padding:30px;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:12px;}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap;}
+.tab{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:8px 14px;background:none;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <h1>AEI — DBMS</h1>
+    <p>ARMY ENVIRONMENTAL INTELLIGENCE DATABASE MANAGEMENT SYSTEM</p>
+  </div>
+  <div class="conn" id="connStatus">● CONNECTING...</div>
+</header>
+<div class="layout">
+<nav>
+  <div class="nav-label">OVERVIEW</div>
+  <button class="nav-btn active" onclick="show('dashboard',this)">◈ Dashboard</button>
+  <div class="nav-label">TABLES</div>
+  <button class="nav-btn" onclick="show('regions',this)">🗺 Regions</button>
+  <button class="nav-btn" onclick="show('hazards',this)">☢ Hazards</button>
+  <button class="nav-btn" onclick="show('reports',this)">📋 Env. Reports</button>
+  <button class="nav-btn" onclick="show('weather',this)">🌩 Weather</button>
+  <button class="nav-btn" onclick="show('missions',this)">🎯 Missions</button>
+  <button class="nav-btn" onclick="show('units',this)">🛡 Units</button>
+  <button class="nav-btn" onclick="show('soldiers',this)">👤 Soldiers</button>
+  <button class="nav-btn" onclick="show('water',this)">💧 Water Sources</button>
+  <div class="nav-label">ANALYTICS</div>
+  <button class="nav-btn" onclick="show('queries',this)">⚡ SQL Queries</button>
+  <button class="nav-btn" onclick="show('views',this)">👁 Views</button>
+  <button class="nav-btn" onclick="show('triggers',this)">🔔 Triggers</button>
+  <button class="nav-btn" onclick="show('procedures',this)">⚙ Procedures</button>
+</nav>
+<main>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section active">
+  <div class="page-header"><h2>COMMAND DASHBOARD</h2><p>LIVE DATABASE OVERVIEW</p></div>
+  <div class="stats-row" id="statsRow"><div class="loading">LOADING</div></div>
+  <div class="panel"><div class="panel-title">ACTIVE THREAT SUMMARY</div><div class="tbl-wrap" id="dashThreats"><div class="loading">LOADING</div></div></div>
+  <div class="panel"><div class="panel-title">MISSION READINESS</div><div class="tbl-wrap" id="dashMissions"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- REGIONS -->
+<div id="regions" class="section">
+  <div class="page-header"><h2>REGIONS</h2><p>GEOGRAPHIC MILITARY ZONES</p></div>
+  <div class="panel">
+    <div class="panel-title">ADD REGION</div>
+    <div class="form-grid">
+      <div class="form-group"><label>NAME</label><input id="rName" placeholder="Northern Zone"/></div>
+      <div class="form-group"><label>TERRAIN</label><select id="rTerrain"><option>Mountain</option><option>Desert</option><option>Wetland</option><option>Plains</option><option>Coastal</option><option>Forest</option></select></div>
+      <div class="form-group"><label>COORDINATES</label><input id="rCoord" placeholder="34.5N, 72.3E"/></div>
+      <div class="form-group"><label>COUNTRY</label><input id="rCountry" value="India"/></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="addRegion()">+ ADD</button></div>
+    <div id="regionMsg"></div>
+  </div>
+  <div class="panel"><div class="panel-title">ALL REGIONS</div><div class="tbl-wrap" id="regionTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- HAZARDS -->
+<div id="hazards" class="section">
+  <div class="page-header"><h2>HAZARDS</h2><p>THREAT REGISTRY</p></div>
+  <div class="panel">
+    <div class="panel-title">ADD HAZARD</div>
+    <div class="form-grid">
+      <div class="form-group"><label>TYPE</label><select id="hType"><option>Chemical</option><option>Biological</option><option>Radiological</option><option>Natural</option><option>Nuclear</option></select></div>
+      <div class="form-group"><label>SEVERITY</label><select id="hSev"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+      <div class="form-group"><label>DESCRIPTION</label><input id="hDesc" placeholder="Description"/></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="addHazard()">+ ADD</button></div>
+    <div id="hazardMsg"></div>
+  </div>
+  <div class="panel"><div class="panel-title">ALL HAZARDS</div><div class="tbl-wrap" id="hazardTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- REPORTS -->
+<div id="reports" class="section">
+  <div class="page-header"><h2>ENVIRONMENTAL REPORTS</h2><p>FIELD OBSERVATIONS</p></div>
+  <div class="panel">
+    <div class="panel-title">SUBMIT REPORT</div>
+    <div class="form-grid">
+      <div class="form-group"><label>REGION ID</label><input id="erReg" type="number" placeholder="1"/></div>
+      <div class="form-group"><label>HAZARD ID</label><input id="erHaz" type="number" placeholder="1"/></div>
+      <div class="form-group"><label>DATE (YYYY-MM-DD)</label><input id="erDate" placeholder="2024-08-05"/></div>
+      <div class="form-group"><label>REPORTED BY</label><input id="erBy" placeholder="Lt. Arjun Singh"/></div>
+      <div class="form-group"><label>STATUS</label><select id="erStat"><option>Active</option><option>Resolved</option></select></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="addReport()">+ SUBMIT</button></div>
+    <div id="reportMsg"></div>
+  </div>
+  <div class="panel"><div class="panel-title">ALL REPORTS</div><div class="tbl-wrap" id="reportTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- WEATHER -->
+<div id="weather" class="section">
+  <div class="page-header"><h2>WEATHER DATA</h2><p>CLIMATIC READINGS</p></div>
+  <div class="panel"><div class="panel-title">WEATHER RECORDS</div><div class="tbl-wrap" id="weatherTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- MISSIONS -->
+<div id="missions" class="section">
+  <div class="page-header"><h2>MISSIONS</h2><p>MILITARY OPERATIONS</p></div>
+  <div class="panel">
+    <div class="panel-title">ADD MISSION</div>
+    <div class="form-grid">
+      <div class="form-group"><label>MISSION NAME</label><input id="mName" placeholder="Operation X"/></div>
+      <div class="form-group"><label>REGION ID</label><input id="mReg" type="number" placeholder="1"/></div>
+      <div class="form-group"><label>UNIT ID</label><input id="mUnit" type="number" placeholder="1"/></div>
+      <div class="form-group"><label>START DATE (YYYY-MM-DD)</label><input id="mStart" placeholder="2024-08-05" /></div>
+      <div class="form-group"><label>STATUS</label><select id="mStat"><option>Planned</option><option>Active</option><option>Completed</option></select></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="addMission()">+ ADD</button></div>
+    <div id="missionMsg"></div>
+  </div>
+  <div class="panel"><div class="panel-title">ALL MISSIONS</div><div class="tbl-wrap" id="missionTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- UNITS -->
+<div id="units" class="section">
+  <div class="page-header"><h2>UNITS</h2><p>MILITARY UNIT REGISTRY</p></div>
+  <div class="panel"><div class="panel-title">UNIT RECORDS</div><div class="tbl-wrap" id="unitTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- SOLDIERS -->
+<div id="soldiers" class="section">
+  <div class="page-header"><h2>SOLDIERS</h2><p>PERSONNEL REGISTRY</p></div>
+  <div class="panel">
+    <div class="panel-title">ADD SOLDIER</div>
+    <div class="form-grid">
+      <div class="form-group"><label>NAME</label><input id="sName" placeholder="Arjun Singh"/></div>
+      <div class="form-group"><label>RANK</label><select id="sRank"><option>Lieutenant</option><option>Captain</option><option>Major</option><option>Colonel</option><option>Brigadier</option></select></div>
+      <div class="form-group"><label>UNIT ID</label><input id="sUnit" type="number" placeholder="1"/></div>
+      <div class="form-group"><label>DATE JOINED (YYYY-MM-DD)</label><input id="sDate" placeholder="2024-01-01"/></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="addSoldier()">+ ADD</button></div>
+    <div id="soldierMsg"></div>
+  </div>
+  <div class="panel"><div class="panel-title">ALL SOLDIERS</div><div class="tbl-wrap" id="soldierTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- WATER -->
+<div id="water" class="section">
+  <div class="page-header"><h2>WATER SOURCES</h2><p>WATER QUALITY MONITORING</p></div>
+  <div class="panel"><div class="panel-title">WATER RECORDS</div><div class="tbl-wrap" id="waterTable"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- QUERIES -->
+<div id="queries" class="section">
+  <div class="page-header"><h2>SQL QUERIES</h2><p>COMPLEX ANALYTICS</p></div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('q1',this)">AVG TEMPERATURE</button>
+    <button class="tab" onclick="showTab('q2',this)">HAZARD COUNT</button>
+  </div>
+  <div id="q1" class="q-tab">
+    <div class="panel"><div class="panel-title">AVG TEMPERATURE PER REGION</div><div class="tbl-wrap" id="q1res"><div class="loading">LOADING</div></div></div>
+  </div>
+  <div id="q2" class="q-tab" style="display:none">
+    <div class="panel"><div class="panel-title">HAZARD REPORT COUNT BY SEVERITY</div><div class="tbl-wrap" id="q2res"><div class="loading">LOADING</div></div></div>
+  </div>
+</div>
+
+<!-- VIEWS -->
+<div id="views" class="section">
+  <div class="page-header"><h2>VIEWS</h2><p>VIRTUAL TABLES</p></div>
+  <div class="panel"><div class="panel-title">ACTIVE_THREAT_SUMMARY</div><div class="tbl-wrap" id="viewThreats"><div class="loading">LOADING</div></div></div>
+  <div class="panel"><div class="panel-title">MISSION_READINESS</div><div class="tbl-wrap" id="viewMissions"><div class="loading">LOADING</div></div></div>
+</div>
+
+<!-- TRIGGERS -->
+<div id="triggers" class="section">
+  <div class="page-header"><h2>TRIGGERS</h2><p>LIVE TRIGGER DEMO</p></div>
+  <div class="panel">
+    <div class="panel-title">TRIGGER 1: HAZARD SEVERITY AUDIT</div>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;">Update a hazard severity → trigger logs the change automatically.</p>
+    <div class="form-grid">
+      <div class="form-group"><label>HAZARD ID</label><input id="tHId" type="number" placeholder="3"/></div>
+      <div class="form-group"><label>NEW SEVERITY</label><select id="tHSev"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-warn" onclick="fireTrigger1()">⚡ FIRE TRIGGER</button><button class="btn btn-info" onclick="loadAudit()">↻ RELOAD LOG</button></div>
+    <div id="t1msg"></div>
+    <br/>
+    <div class="panel-title">AUDIT LOG</div>
+    <div class="tbl-wrap" id="auditTable"><div class="loading">LOADING</div></div>
+  </div>
+</div>
+
+<!-- PROCEDURES -->
+<div id="procedures" class="section">
+  <div class="page-header"><h2>STORED PROCEDURES</h2><p>CURSOR-BASED PROCEDURES</p></div>
+  <div class="panel">
+    <div class="panel-title">sp_list_active_missions()</div>
+    <div class="btn-row" style="margin-bottom:12px;"><button class="btn btn-info" onclick="callP1()">▶ CALL</button></div>
+    <div class="tbl-wrap" id="p1res"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">sp_check_water_quality()</div>
+    <div class="btn-row" style="margin-bottom:12px;"><button class="btn btn-info" onclick="callP2()">▶ CALL</button></div>
+    <div class="tbl-wrap" id="p2res"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+
+async function get(url){const r=await fetch(API+url);if(!r.ok)throw await r.json();return r.json();}
+async function post(url,body){const r=await fetch(API+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw await r.json();return r.json();}
+async function put(url){const r=await fetch(API+url,{method:'PUT'});if(!r.ok)throw await r.json();return r.json();}
+async function del(url){const r=await fetch(API+url,{method:'DELETE'});if(!r.ok)throw await r.json();return r.json();}
+function v(id){return document.getElementById(id)?.value||'';}
+
+function badge(val){
+  const map={active:'b-active',completed:'b-completed',planned:'b-planned',resolved:'b-resolved',critical:'b-critical',high:'b-high',medium:'b-medium',low:'b-low',safe:'b-safe',contaminated:'b-contaminated',questionable:'b-questionable'};
+  const k=String(val).toLowerCase();
+  return map[k]?`<span class="badge ${map[k]}">${val}</span>`:val;
+}
+
+const statusCols=new Set(['Status','Severity','Quality_Status','Mission_Status']);
+
+// Delete config per table
+const deleteConfig = {
+  regionTable:  {endpoint:'region',   pk:'Region_ID',   section:'regions'},
+  hazardTable:  {endpoint:'hazard',   pk:'Hazard_ID',   section:'hazards'},
+  reportTable:  {endpoint:'report',   pk:'Report_ID',   section:'reports'},
+  soldierTable: {endpoint:'soldier',  pk:'Soldier_ID',  section:'soldiers'},
+  missionTable: {endpoint:'mission',  pk:'Mission_ID',  section:'missions'},
+};
+
+function renderTable(rows, el, showDelete=false){
+  if(!rows||!rows.length){el.innerHTML='<div class="alert alert-info">NO RECORDS</div>';return;}
+  const cols=Object.keys(rows[0]);
+  let h=`<table><thead><tr>${cols.map(c=>`<th>${c.replace(/_/g,' ')}</th>`).join('')}${showDelete?'<th>ACTION</th>':''}</tr></thead><tbody>`;
+  rows.forEach(r=>{
+    h+='<tr>'+cols.map(c=>`<td>${statusCols.has(c)?badge(r[c]??''):r[c]??''}</td>`).join('');
+    if(showDelete){
+      const cfg = deleteConfig[el.id];
+      if(cfg){
+        const pkVal = r[cfg.pk];
+        h+=`<td><button class="btn btn-danger btn-sm" onclick="deleteRecord('${el.id}',${pkVal})">🗑 DEL</button></td>`;
+      }
+    }
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+
+async function deleteRecord(tableElId, pkVal){
+  if(!confirm('Are you sure you want to delete this record?')) return;
+  const cfg = deleteConfig[tableElId];
+  if(!cfg){alert('Delete not supported for this table');return;}
+  try{
+    await del(`/${cfg.endpoint}/${pkVal}`);
+    loadSection(cfg.section);
+  }catch(e){
+    alert('Error: '+(e.detail||JSON.stringify(e)));
+  }
+}
+
+function msg(id,txt,type='success'){
+  document.getElementById(id).innerHTML=`<div class="alert alert-${type}">${txt}</div>`;
+  setTimeout(()=>document.getElementById(id).innerHTML='',4000);
+}
+
+function show(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  loadSection(id);
+}
+
+function showTab(id,btn){
+  document.querySelectorAll('.q-tab').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).style.display='block';
+  btn.classList.add('active');
+}
+
+async function checkConn(){
+  try{await get('/');document.getElementById('connStatus').textContent='● DB CONNECTED';}
+  catch{document.getElementById('connStatus').textContent='✗ API OFFLINE';document.getElementById('connStatus').style.borderColor='var(--danger)';document.getElementById('connStatus').style.color='var(--danger)';}
+}
+
+async function loadDashboard(){
+  try{
+    const [reg,haz,mis,sol,uni,wat,rep]=await Promise.all([get('/table/region'),get('/table/hazard'),get('/table/mission'),get('/table/soldier'),get('/table/unit'),get('/table/water_source'),get('/table/environmental_report')]);
+    document.getElementById('statsRow').innerHTML=`
+      <div class="stat-card"><div class="stat-num">${reg.length}</div><div class="stat-label">REGIONS</div></div>
+      <div class="stat-card"><div class="stat-num">${haz.length}</div><div class="stat-label">HAZARDS</div></div>
+      <div class="stat-card"><div class="stat-num">${mis.length}</div><div class="stat-label">MISSIONS</div></div>
+      <div class="stat-card"><div class="stat-num">${sol.length}</div><div class="stat-label">SOLDIERS</div></div>
+      <div class="stat-card"><div class="stat-num">${uni.length}</div><div class="stat-label">UNITS</div></div>
+      <div class="stat-card"><div class="stat-num">${wat.length}</div><div class="stat-label">WATER SOURCES</div></div>
+      <div class="stat-card"><div class="stat-num">${rep.length}</div><div class="stat-label">REPORTS</div></div>
+      <div class="stat-card"><div class="stat-num">${mis.filter(m=>m.Status==='Active').length}</div><div class="stat-label">ACTIVE OPS</div></div>`;
+    renderTable(await get('/view/active_threats'),document.getElementById('dashThreats'));
+    renderTable(await get('/view/mission_readiness'),document.getElementById('dashMissions'));
+  }catch(e){console.error(e);}
+}
+
+async function loadSection(id){
+  const map={
+    dashboard:loadDashboard,
+    regions:  ()=>loadT('region','regionTable',true),
+    hazards:  ()=>loadT('hazard','hazardTable',true),
+    reports:  ()=>loadT('environmental_report','reportTable',true),
+    weather:  ()=>loadT('weather_data','weatherTable',false),
+    missions: ()=>loadT('mission','missionTable',true),
+    units:    ()=>loadT('unit','unitTable',false),
+    soldiers: ()=>loadT('soldier','soldierTable',true),
+    water:    ()=>loadT('water_source','waterTable',false),
+    queries:  loadQueries,
+    views:    loadViews,
+    triggers: loadAudit,
+    procedures:()=>{}
+  };
+  if(map[id]) await map[id]();
+}
+
+async function loadT(name,elId,showDelete=false){
+  try{renderTable(await get('/table/'+name),document.getElementById(elId),showDelete);}
+  catch(e){document.getElementById(elId).innerHTML=`<div class="alert alert-error">ERROR: ${e.detail||e}</div>`;}
+}
+
+async function loadQueries(){
+  try{renderTable(await get('/query/avg_temp'),document.getElementById('q1res'));}catch(e){}
+  try{renderTable(await get('/query/hazard_count'),document.getElementById('q2res'));}catch(e){}
+}
+
+async function loadViews(){
+  try{renderTable(await get('/view/active_threats'),document.getElementById('viewThreats'));}catch(e){}
+  try{renderTable(await get('/view/mission_readiness'),document.getElementById('viewMissions'));}catch(e){}
+}
+
+async function loadAudit(){
+  try{renderTable(await get('/table/hazard_audit_log'),document.getElementById('auditTable'));}catch(e){}
+}
+
+async function addRegion(){
+  try{await post('/region',{Name:v('rName'),Terrain_Type:v('rTerrain'),Coordinates:v('rCoord'),Country:v('rCountry')});msg('regionMsg','✓ REGION ADDED');loadT('region','regionTable',true);}
+  catch(e){msg('regionMsg','ERROR: '+(e.detail||e),'error');}
+}
+async function addHazard(){
+  try{await post('/hazard',{Type:v('hType'),Severity:v('hSev'),Description:v('hDesc')});msg('hazardMsg','✓ HAZARD ADDED');loadT('hazard','hazardTable',true);}
+  catch(e){msg('hazardMsg','ERROR: '+(e.detail||e),'error');}
+}
+async function addReport(){
+  try{await post('/report',{Region_ID:+v('erReg'),Hazard_ID:+v('erHaz'),Report_Date:v('erDate'),Reported_By:v('erBy'),Status:v('erStat')});msg('reportMsg','✓ REPORT SUBMITTED');loadT('environmental_report','reportTable',true);}
+  catch(e){msg('reportMsg','ERROR: '+(e.detail||e),'error');}
+}
+async function addMission(){
+  try{await post('/mission',{Mission_Name:v('mName'),Region_ID:+v('mReg'),Unit_ID:+v('mUnit'),Start_Date:v('mStart'),Status:v('mStat')});msg('missionMsg','✓ MISSION ADDED');loadT('mission','missionTable',true);}
+  catch(e){msg('missionMsg','ERROR: '+(e.detail||e),'error');}
+}
+async function addSoldier(){
+  try{await post('/soldier',{Name:v('sName'),Soldier_Rank:v('sRank'),Unit_ID:+v('sUnit'),Date_Joined:v('sDate')});msg('soldierMsg','✓ SOLDIER ADDED');loadT('soldier','soldierTable',true);}
+  catch(e){msg('soldierMsg','ERROR: '+(e.detail||e),'error');}
+}
+
+async function fireTrigger1(){
+  try{
+    await put(`/hazard/${v('tHId')}/severity?severity=${v('tHSev')}`);
+    msg('t1msg',`✓ TRIGGER FIRED — Hazard ${v('tHId')} updated to ${v('tHSev')}. Check audit log.`);
+    loadAudit();
+  }catch(e){msg('t1msg','ERROR: '+(e.detail||e),'error');}
+}
+
+async function callP1(){
+  try{renderTable(await get('/procedure/active_missions'),document.getElementById('p1res'));}
+  catch(e){document.getElementById('p1res').innerHTML=`<div class="alert alert-error">ERROR</div>`;}
+}
+async function callP2(){
+  try{renderTable(await get('/procedure/water_alerts'),document.getElementById('p2res'));}
+  catch(e){document.getElementById('p2res').innerHTML=`<div class="alert alert-error">ERROR</div>`;}
+}
+
+checkConn();
+loadDashboard();
+</script>
+</body>
+</html>
